@@ -1,0 +1,36 @@
+Patch: make the sing-box sidecar usable on Android
+=====================================================
+
+Why this is needed
+-------------------
+internal/subs/singbox.go decides the release asset from runtime.GOOS/GOARCH:
+
+    func singBoxPlatform() (string, string) { return runtime.GOOS, runtime.GOARCH }
+    // suffix: "-<goos>-<goarch>.tar.gz"
+
+On an Android build GOOS is "android", so it asks SagerNet for
+"sing-box-<ver>-android-arm64.tar.gz" — an asset that does not exist, and the
+sidecar never starts. Android userland is Linux, so the right asset is
+"-linux-arm64.tar.gz". One function is the whole fix.
+
+Apply from the goroot checkout root:
+
+    patch -p1 < ../patches/subs-android.patch
+
+or just edit the single line by hand (see below) — the patch is 1 line.
+
+--- a/internal/subs/singbox.go
++++ b/internal/subs/singbox.go
+@@ -38,7 +38,17 @@
+ // singBoxPlatform is the pair this build asks for.
+-func singBoxPlatform() (string, string) { return runtime.GOOS, runtime.GOARCH }
++func singBoxPlatform() (string, string) {
++	goos, goarch := runtime.GOOS, runtime.GOARCH
++	// Android has no sing-box release of its own; its userland is the Linux
++	// one. Without this the sidecar asks for an asset that does not exist and
++	// the whole rotation feature silently degrades to direct dialing.
++	if goos == "android" {
++		goos = "linux"
++	}
++	return goos, goarch
++}
