@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- The gateway must outlive the Activity: the user starts it, switches to
+         Operit / ChatBox, and expects the port to still answer. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- PARTIAL_WAKE_LOCK keeps the process out of the Cached App Freezer.
+         Without it MIUI/ColorOS leave the socket listening but stop scheduling
+         the process, so every request hangs instead of failing fast. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- Battery-optimisation whitelist. This is the vendor-approved door and it
+         outperforms every technical trick below it; the UI offers a button. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <!-- Watchdog + post-swipe-away revival. Android 12+ only fires these in
+         Doze if declared. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+
+    <!-- Deliberately NO RECEIVE_BOOT_COMPLETED: the gateway is user-started.
+         Auto-starting a network listener on boot is a choice the user makes by
+         tapping the app, not one we make for them. -->
+
+    <application
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.ZenGate"
+        android:usesCleartextTraffic="false">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- stopWithTask=false: swiping the app off the recents list must not
+             take the listener with it.
+             specialUse rather than dataSync: dataSync is capped at 6h on API 35+,
+             and this is a self-installed local gateway, which is exactly what
+             specialUse is for. -->
+        <service
+            android:name=".GatewayService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse"
+            android:stopWithTask="false">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Local OpenAI-compatible API gateway for on-device AI agents" />
+        </service>
+
+        <receiver
+            android:name=".WatchdogReceiver"
+            android:exported="false" />
+    </application>
+</manifest>
