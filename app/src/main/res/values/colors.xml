@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="zg_bg">#0B0C10</color>
+    <color name="zg_surface">#16181D</color>
+    <color name="zg_accent">#4ADE80</color>
+    <color name="zg_text">#E8EAED</color>
+    <color name="zg_muted">#9AA0A6</color>
+</resources>
