@@ -1,0 +1,26 @@
+name: bootstrap
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+
+jobs:
+  unpack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unpack
+        run: |
+          set -eu
+          unzip -o zen-gate-android.zip -d . > /dev/null
+          rm -f zen-gate-android.zip
+          rm -f .github/workflows/bootstrap.yml
+          find . -path ./.git -prune -o -type f -print | sort
+      - name: Commit
+        run: |
+          set -eu
+          git config user.name  "bootstrap"
+          git config user.email "bootstrap@users.noreply.github.com"
+          git add -A
+          git commit -m "bootstrap: unpack android shell" || true
+          git push
